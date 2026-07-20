@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    container_name: bisleri-api
+    restart: unless-stopped
+    # Deliberately NOT named .env — Compose auto-loads ./.env and interpolates
+    # $VAR inside it, which silently eats the $ in the DB password.
+    env_file: app.env
+    # Bound to loopback on purpose: only host nginx can reach this.
+    # Using "3000:3000" instead would punch through ufw and expose the
+    # API to the internet, unencrypted, on port 3000.
+    ports:
+      - "127.0.0.1:3000:3000"

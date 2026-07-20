@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.*
+app.env
+!.env.example
+*.zip
+Dockerfile
+docker-compose.yml
+nginx
+Bisleri-Mobile-APIs.postman_collection.json

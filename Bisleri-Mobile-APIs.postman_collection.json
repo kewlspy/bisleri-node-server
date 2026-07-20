@@ -1,0 +1,322 @@
+{
+  "info": {
+    "name": "Bisleri Mobile APIs",
+    "description": "Complete collection for the bisleri-node-server mobile APIs.\n\nBase URL is configurable via the `base_url` collection variable (default http://localhost:3000).\nLogin returns a JWT; store it in the `token` variable to send as `Authorization: Bearer {{token}}` (note: the server imports checkToken but does not currently enforce it on any route).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User (register)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"gender\": \"male\",\n  \"email\": \"john@example.com\",\n  \"password\": \"secret123\",\n  \"number\": \"3126654184\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Registers a user. Password is bcrypt-hashed server-side. Inserts into `registration` table."
+          }
+        },
+        {
+          "name": "Get Users (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Returns users from `tbl_user` with pagination metadata."
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"3126654184\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "login"]
+            },
+            "description": "The server prefixes `number` with '92' before lookup (i.e. send the phone without the country code). Returns a JWT `token` on success."
+          }
+        },
+        {
+          "name": "User Data (monthly stats)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/data",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "data"]
+            },
+            "description": "Aggregated monthly totals (orders, completed, bottles, bill, delivery, admin). Requires the full Bisleri schema (orders/completed_orders/store_admin)."
+          }
+        },
+        {
+          "name": "Get Location",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/location",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "location"]
+            },
+            "description": "Returns user_id, lat, lng for the given user."
+          }
+        },
+        {
+          "name": "Update Location",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633,\n  \"lat\": \"24.8607\",\n  \"lng\": \"67.0011\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/locationupdate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "locationupdate"]
+            },
+            "description": "Updates lat/lng on tbl_user for the given user_id."
+          }
+        },
+        {
+          "name": "Update FCM Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633,\n  \"token\": \"fcm_device_token_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/fcmtoken",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "fcmtoken"]
+            },
+            "description": "Stores the FCM/device token (device_id column) for the user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Deliveries",
+      "item": [
+        {
+          "name": "Deliveries by User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/deliveries",
+              "host": ["{{base_url}}"],
+              "path": ["api", "deliveries"]
+            },
+            "description": "All deliveries (completed_orders) for a user."
+          }
+        },
+        {
+          "name": "Deliveries by User (paginated)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/deliveries/page?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "deliveries", "page"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Paginated deliveries for a user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "New Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633,\n  \"orderqty\": 2,\n  \"orderdate\": \"2026-07-15\",\n  \"total\": 160,\n  \"type\": \"regular\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/neworder",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "neworder"]
+            },
+            "description": "Creates an order. storeadmin_id is derived from the user's tbl_user record."
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderid\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/cancelorder",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "cancelorder"]
+            },
+            "description": "Sets order_status = 'cancelled' for the given order_id."
+          }
+        },
+        {
+          "name": "Orders by User (paginated)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/page?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "page"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Non-cancelled orders for a user, newest first, paginated."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Bill (date range)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633,\n  \"frmDate\": \"2026-07-01\",\n  \"toDate\": \"2026-07-31\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/bill",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "bill"]
+            },
+            "description": "Detailed bill/dues computation for a user over the given date range."
+          }
+        },
+        {
+          "name": "Overview",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/overview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "overview"]
+            },
+            "description": "Current-month totals, pre-dues and grand total for a user."
+          }
+        },
+        {
+          "name": "Payments by User (paginated)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userid\": 633\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/page?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "page"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Payment history for a user, newest first, paginated."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pay (Stripe)",
+      "item": [
+        {
+          "name": "Create Payment Intent",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pay/intent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pay", "intent"]
+            },
+            "description": "Creates a Stripe PaymentIntent (currency usd). `amount` is in the smallest currency unit (cents), e.g. 5000 = $50.00. Returns the client_secret as `paymentIntent`."
+          }
+        }
+      ]
+    }
+  ]
+}

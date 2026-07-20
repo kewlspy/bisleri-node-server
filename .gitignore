@@ -1,0 +1,6 @@
+.env
+.env.production
+app.env
+node_modules
+*.zip
+*.tar.gz
