@@ -51,9 +51,10 @@ module.exports = {
       (SELECT ifnull((SUM(subs_id*completed_rate)),0) FROM completed_orders WHERE YEAR(delivery_date)= YEAR(CURRENT_DATE()) and MONTH(delivery_date)=MONTH(CURRENT_DATE()) and  user_id=?) as totalBill,
       (SELECT storeadmin_deliverycharges FROM store_admin where storeadmin_id=(select storeadmin_id from tbl_user where user_id=?)) as delivery,
       (SELECT storeadmin_name FROM store_admin where storeadmin_id=(select storeadmin_id from tbl_user where user_id=?)) as admin,
-      ((SELECT empty_btl FROM tbl_user WHERE user_id=?) + IFNULL((SELECT SUM(subs_id) FROM completed_orders WHERE user_id=?),0) - IFNULL((SELECT SUM(returnbtl) FROM completed_orders WHERE user_id=?),0)) as remainbtl`,
+      ((SELECT empty_btl FROM tbl_user WHERE user_id=?) + IFNULL((SELECT SUM(subs_id) FROM completed_orders WHERE user_id=?),0) - IFNULL((SELECT SUM(returnbtl) FROM completed_orders WHERE user_id=?),0)) as remainbtl,
+      (SELECT first_recharge_coupon FROM tbl_user WHERE user_id=?) as deposit`,
       // `select * from tbl_user where user_id = ?`,
-      [userid, userid, userid, userid, userid, userid, userid, userid, userid],
+      [userid, userid, userid, userid, userid, userid, userid, userid, userid, userid],
       (error, results, fields) => {
         if (error) {
           return callBack(error);
