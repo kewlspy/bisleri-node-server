@@ -101,7 +101,7 @@ module.exports = {
              FROM completed_orders co
             WHERE co.user_id = u.user_id)
           -
-          (SELECT IFNULL(SUM(recieved), 0) FROM payment p WHERE p.user_id = u.user_id)
+          (SELECT IFNULL(SUM(recieved), 0) FROM payment p WHERE p.user_id = u.user_id) + u.user_balance
         ) AS total,
 
         (SELECT dues + total) AS gtotal
