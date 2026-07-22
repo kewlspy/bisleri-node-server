@@ -16,38 +16,65 @@ module.exports = {
   // SELECT * FROM store_admin WHERE (SELECT storeadmin_id from tbl_user where tbl_user.user_id=848)=store_admin.storeadmin_id
   getBillByUser: (data, callBack) => {
     pool.query(
-      `SELECT DISTINCT tbl_user.user_id, first_recharge_coupon, user_name,user_area,rate,tbl_user.product_name,
-      (SELECT ifnull(SUM(completed_rate*subs_id),0) from completed_orders WHERE user_id=tbl_user.user_id ) as total_btl_bill,
-      (SELECT ifnull(SUM(subs_id),0) from completed_orders WHERE user_id=tbl_user.user_id AND delivery_date Between ? AND ?) as month_btl,
-      (SELECT billing_month
-      FROM 
-      tbl_user,payment 
-      where 
-      tbl_user.user_id=payment.user_id && tbl_user.user_id=? && recieved is not Null order by payment_id DESC LIMIT 1)as mon,
-      (SELECT recieved
-      FROM tbl_user,payment where      tbl_user.user_id=payment.user_id && tbl_user.user_id=? && recieved is not Null order by payment_id DESC LIMIT 1)as paid,
-      (SELECT IFNULL( SUM(recieved),0) FROM payment where user_id=tbl_user.user_id and date_recieved Between ? AND ?) as month_pay,
-      (SELECT date_recieved FROM       tbl_user,payment 
-      where    tbl_user.user_id=payment.user_id && tbl_user.user_id=? && recieved is not null order by payment_id DESC LIMIT 1)as daterecieve,
-      
-      (SELECT ifnull(SUM(completed_rate*subs_id),0) from completed_orders WHERE user_id=tbl_user.user_id AND delivery_date Between ? AND ?) as 'total_dues' ,
-      (SELECT ifnull(SUM(completed_rate*subs_id),0) from completed_orders WHERE user_id=tbl_user.user_id AND YEAR(delivery_date)= YEAR(CURRENT_DATE()) and MONTH(delivery_date)=MONTH(CURRENT_DATE())) as curr_month ,
-      (SELECT IFNULL( SUM(recieved),0) FROM payment where user_id=tbl_user.user_id) as total_pay,(SELECT(total_btl_bill)+(user_balance)-(total_pay)-(curr_month)-(total_dues)) as 'pre_duess',
-      (SELECT CASE when pre_duess<=0 THEN (pre_duess)+(month_pay)
-      WHEN pre_duess>0 THEN (pre_duess)+(month_pay) END )as 'pre_dues',
-      (SELECT CASE when pre_duess<=0 THEN (total_dues) +(pre_duess)
-      WHEN pre_duess>0 THEN (pre_duess)+(total_dues) END )as Gtotal
-      FROM tbl_user LEFT JOIN completed_orders on tbl_user.user_id=completed_orders.user_id LEFT JOIN payment ON completed_orders.user_id=payment.user_id where tbl_user.user_id=?`,
+      `SELECT
+        u.user_id,
+        u.first_recharge_coupon,
+        u.user_name,
+        u.user_area,
+        u.rate,
+        u.product_name,
+        IFNULL(co.total_btl_bill, 0) AS total_btl_bill,
+        IFNULL(co.month_btl, 0) AS month_btl,
+        lp.billing_month AS mon,
+        lp.recieved AS paid,
+        IFNULL(p.month_pay, 0) AS month_pay,
+        lp.date_recieved AS daterecieve,
+        IFNULL(co.total_dues, 0) AS total_dues,
+        IFNULL(co.curr_month, 0) AS curr_month,
+        IFNULL(p.total_pay, 0) AS total_pay,
+        (IFNULL(co.total_btl_bill, 0) + u.user_balance - IFNULL(p.total_pay, 0) - IFNULL(co.curr_month, 0) - IFNULL(co.total_dues, 0)) AS pre_duess,
+        (IFNULL(co.total_btl_bill, 0) + u.user_balance - IFNULL(p.total_pay, 0) - IFNULL(co.curr_month, 0) - IFNULL(co.total_dues, 0)) + IFNULL(p.month_pay, 0) AS pre_dues,
+        (IFNULL(co.total_btl_bill, 0) + u.user_balance - IFNULL(p.total_pay, 0) - IFNULL(co.curr_month, 0) - IFNULL(co.total_dues, 0)) + IFNULL(co.total_dues, 0) AS Gtotal
+      FROM tbl_user u
+      LEFT JOIN (
+        SELECT
+          user_id,
+          SUM(completed_rate * subs_id) AS total_btl_bill,
+          SUM(CASE WHEN delivery_date BETWEEN ? AND ? THEN subs_id ELSE 0 END) AS month_btl,
+          SUM(CASE WHEN delivery_date BETWEEN ? AND ? THEN completed_rate * subs_id ELSE 0 END) AS total_dues,
+          SUM(CASE WHEN YEAR(delivery_date) = YEAR(CURDATE()) AND MONTH(delivery_date) = MONTH(CURDATE())
+                   THEN completed_rate * subs_id ELSE 0 END) AS curr_month
+        FROM completed_orders
+        WHERE user_id = ?
+        GROUP BY user_id
+      ) co ON co.user_id = u.user_id
+      LEFT JOIN (
+        SELECT
+          user_id,
+          SUM(recieved) AS total_pay,
+          SUM(CASE WHEN date_recieved BETWEEN ? AND ? THEN recieved ELSE 0 END) AS month_pay
+        FROM payment
+        WHERE user_id = ?
+        GROUP BY user_id
+      ) p ON p.user_id = u.user_id
+      LEFT JOIN (
+        SELECT user_id, billing_month, recieved, date_recieved
+        FROM payment
+        WHERE user_id = ? AND recieved IS NOT NULL
+        ORDER BY payment_id DESC
+        LIMIT 1
+      ) lp ON lp.user_id = u.user_id
+      WHERE u.user_id = ?`,
       [
         data.frmDate,
         data.toDate,
-        data.userid,
-        data.userid,
         data.frmDate,
         data.toDate,
         data.userid,
         data.frmDate,
         data.toDate,
+        data.userid,
+        data.userid,
         data.userid,
       ],
       (error, results, fields) => {
