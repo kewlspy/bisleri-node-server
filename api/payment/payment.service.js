@@ -60,11 +60,54 @@ module.exports = {
   },
   getOByUser: (userid, callBack) => {
     pool.query(
-      `SELECT DISTINCT tbl_user.user_id, user_name,user_area, (SELECT ifnull(SUM(subs_id),0) from completed_orders WHERE completed_orders.user_id=tbl_user.user_id AND YEAR(delivery_date)= YEAR(CURRENT_DATE()) and MONTH(delivery_date)=MONTH(CURRENT_DATE())) as total_btl,
-      (((SELECT IFNULL(SUM(completed_rate*subs_id),0) from completed_orders WHERE completed_orders.user_id=tbl_user.user_id)-(SELECT IFNULL(SUM(completed_rate*subs_id),0) from completed_orders WHERE user_id=tbl_user.user_id AND YEAR(delivery_date)= YEAR(CURRENT_DATE()) and MONTH(delivery_date)=MONTH(CURRENT_DATE()))) )as pre_dues,
-      ((((SELECT IFNULL(SUM(completed_rate*subs_id),0) from completed_orders WHERE completed_orders.user_id=tbl_user.user_id)-(SELECT IFNULL(SUM(completed_rate*subs_id),0) from completed_orders WHERE user_id=tbl_user.user_id AND YEAR(delivery_date)= YEAR(CURRENT_DATE()) and MONTH(delivery_date)=MONTH(CURRENT_DATE()))) -(SELECT IFNULL( SUM(recieved),0) FROM payment where user_id=tbl_user.user_id))+(user_balance)
-) as 'dues',(SELECT IFNULL(SUM(rate*subs_id),0) from completed_orders WHERE completed_orders.user_id=tbl_user.user_id AND YEAR(delivery_date)= YEAR(CURRENT_DATE()) and MONTH(delivery_date)=MONTH(CURRENT_DATE())) as curr_bill,((SELECT IFNULL(SUM(completed_rate*subs_id),0) from completed_orders WHERE completed_orders.user_id=tbl_user.user_id)-(SELECT ifnull(SUM(recieved),0)FROM payment WHERE payment.user_id=tbl_user.user_id) ) as 'total' ,
-    ( SELECT(dues)+(total)) as gtotal FROM tbl_user LEFT JOIN completed_orders on tbl_user.user_id=completed_orders.user_id LEFT JOIN payment ON completed_orders.user_id=payment.user_id WHERE tbl_user.user_id=?`,
+      `SELECT
+        u.user_id,
+        u.user_name,
+        u.user_area,
+
+        (SELECT IFNULL(SUM(subs_id), 0)
+           FROM completed_orders co
+          WHERE co.user_id = u.user_id
+            AND YEAR(co.delivery_date) = YEAR(CURRENT_DATE())
+            AND MONTH(co.delivery_date) = MONTH(CURRENT_DATE())
+        ) AS total_btl,
+
+        (
+          (SELECT IFNULL(SUM(completed_rate * subs_id), 0)
+             FROM completed_orders co
+            WHERE co.user_id = u.user_id)
+          -
+          (SELECT IFNULL(SUM(completed_rate * subs_id), 0)
+             FROM completed_orders co
+            WHERE co.user_id = u.user_id
+              AND YEAR(co.delivery_date) = YEAR(CURRENT_DATE())
+              AND MONTH(co.delivery_date) = MONTH(CURRENT_DATE()))
+        ) AS pre_dues,
+
+        (SELECT pre_dues
+                - (SELECT IFNULL(SUM(recieved), 0) FROM payment p WHERE p.user_id = u.user_id)
+                + u.user_balance
+        ) AS dues,
+
+        (SELECT IFNULL(SUM(rate * subs_id), 0)
+           FROM completed_orders co
+          WHERE co.user_id = u.user_id
+            AND YEAR(co.delivery_date) = YEAR(CURRENT_DATE())
+            AND MONTH(co.delivery_date) = MONTH(CURRENT_DATE())
+        ) AS curr_bill,
+
+        (
+          (SELECT IFNULL(SUM(completed_rate * subs_id), 0)
+             FROM completed_orders co
+            WHERE co.user_id = u.user_id)
+          -
+          (SELECT IFNULL(SUM(recieved), 0) FROM payment p WHERE p.user_id = u.user_id)
+        ) AS total,
+
+        (SELECT dues + total) AS gtotal
+
+      FROM tbl_user u
+      WHERE u.user_id = ?`,
       [userid],
       (error, results, fields) => {
         if (error) {
