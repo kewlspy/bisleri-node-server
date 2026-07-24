@@ -121,7 +121,7 @@ module.exports = {
             SUM(CASE WHEN delivery_date < DATE_FORMAT(CURDATE(), '%Y-%m-01')
                      THEN completed_rate * subs_id ELSE 0 END) AS pre_dues,
             SUM(CASE WHEN delivery_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
-                     THEN rate * subs_id ELSE 0 END)            AS curr_bill,
+                     THEN completed_rate * subs_id ELSE 0 END)            AS curr_bill,
             SUM(CASE WHEN delivery_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
                      THEN subs_id ELSE 0 END)                   AS curr_month_btl
           FROM completed_orders
